@@ -206,7 +206,11 @@ class ImageNodeWidgetState extends State<ImageNodeWidget> with SelectableMixin {
           children: [
             OutlinedButton(
               onPressed: () {
-                widget.node.unlink();
+                final editorState =
+                    Provider.of<EditorState>(context, listen: false);
+                final transaction = editorState.transaction
+                  ..deleteNode(widget.node);
+                editorState.apply(transaction);
               },
               child: const Icon(
                 Icons.delete,
