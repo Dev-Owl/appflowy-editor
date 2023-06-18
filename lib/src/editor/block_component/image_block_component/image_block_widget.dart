@@ -1,9 +1,12 @@
 import 'package:appflowy_editor/src/core/document/node.dart';
 import 'package:appflowy_editor/src/core/location/position.dart';
 import 'package:appflowy_editor/src/core/location/selection.dart';
+import 'package:appflowy_editor/src/editor/block_component/image_block_component/image_block_component.dart';
+import 'package:appflowy_editor/src/editor_state.dart';
 import 'package:appflowy_editor/src/extensions/object_extensions.dart';
 import 'package:appflowy_editor/src/render/selection/selectable.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ImageNodeWidget extends StatefulWidget {
   const ImageNodeWidget({
@@ -163,6 +166,7 @@ class ImageNodeWidgetState extends State<ImageNodeWidget> with SelectableMixin {
       children: [
         networkImage,
         if (widget.editable) ...[
+          ..._editors(context),
           _buildEdgeGesture(
             context,
             top: 0,
@@ -190,6 +194,59 @@ class ImageNodeWidgetState extends State<ImageNodeWidget> with SelectableMixin {
         ],
       ],
     );
+  }
+
+  List<Widget> _editors(BuildContext context) {
+    if (onFocus == false) return [];
+
+    return [
+      Positioned(
+        right: 0,
+        child: ButtonBar(
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                widget.node.unlink();
+              },
+              icon: const Icon(
+                Icons.delete,
+              ),
+              label: const Text('Delete'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _alignSelfTo("left"),
+              icon: const Icon(
+                Icons.format_align_left,
+              ),
+              label: const Text('Left'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _alignSelfTo("center"),
+              icon: const Icon(
+                Icons.format_align_center,
+              ),
+              label: const Text('Center'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _alignSelfTo("right"),
+              icon: const Icon(
+                Icons.format_align_right,
+              ),
+              label: const Text('Right'),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  void _alignSelfTo(String newAlignment) {
+    final editorState = Provider.of<EditorState>(context, listen: false);
+    final transaction = editorState.transaction
+      ..updateNode(widget.node, {
+        ImageBlockKeys.align: newAlignment,
+      });
+    editorState.apply(transaction);
   }
 
   Widget _buildLoading(BuildContext context) {
