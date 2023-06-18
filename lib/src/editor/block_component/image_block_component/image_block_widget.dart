@@ -202,37 +202,33 @@ class ImageNodeWidgetState extends State<ImageNodeWidget> with SelectableMixin {
     return [
       Positioned(
         right: 0,
-        child: ButtonBar(
+        child: Wrap(
           children: [
-            ElevatedButton.icon(
+            OutlinedButton(
               onPressed: () {
                 widget.node.unlink();
               },
-              icon: const Icon(
+              child: const Icon(
                 Icons.delete,
               ),
-              label: const Text('Delete'),
             ),
-            ElevatedButton.icon(
+            OutlinedButton(
               onPressed: () => _alignSelfTo("left"),
-              icon: const Icon(
+              child: const Icon(
                 Icons.format_align_left,
               ),
-              label: const Text('Left'),
             ),
-            ElevatedButton.icon(
+            OutlinedButton(
               onPressed: () => _alignSelfTo("center"),
-              icon: const Icon(
+              child: const Icon(
                 Icons.format_align_center,
               ),
-              label: const Text('Center'),
             ),
-            ElevatedButton.icon(
+            OutlinedButton(
               onPressed: () => _alignSelfTo("right"),
-              icon: const Icon(
+              child: const Icon(
                 Icons.format_align_right,
               ),
-              label: const Text('Right'),
             ),
           ],
         ),
