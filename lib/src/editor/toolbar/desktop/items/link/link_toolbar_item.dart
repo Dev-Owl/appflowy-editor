@@ -6,19 +6,20 @@ import 'package:flutter/material.dart';
 final linkItem = ToolbarItem(
   id: 'editor.link',
   group: 4,
-  isActive: (editorState) => editorState.selection?.isSingle ?? false,
-  builder: (context, editorState) {
+  isActive: onlyShowInSingleSelectionAndTextType,
+  builder: (context, editorState, highlightColor) {
     final selection = editorState.selection!;
     final nodes = editorState.getNodesInSelection(selection);
     final isHref = nodes.allSatisfyInSelection(selection, (delta) {
       return delta.everyAttributes(
-        (attributes) => attributes[FlowyRichTextKeys.href] != null,
+        (attributes) => attributes[AppFlowyRichTextKeys.href] != null,
       );
     });
 
-    return IconItemWidget(
+    return SVGIconItemWidget(
       iconName: 'toolbar/link',
       isHighlight: isHref,
+      highlightColor: highlightColor,
       tooltip: AppFlowyEditorLocalizations.current.link,
       onPressed: () {
         showLinkMenu(context, editorState, selection, isHref);
@@ -111,6 +112,7 @@ void showLinkMenu(
           editorState.apply(transaction);
           dismissOverlay();
         },
+        onDismiss: dismissOverlay,
       );
     },
   ).build();

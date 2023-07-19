@@ -2,7 +2,7 @@ import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'image_block_widget.dart';
+import 'resizable_image.dart';
 
 class ImageBlockKeys {
   ImageBlockKeys._();
@@ -49,13 +49,26 @@ Node imageNode({
   );
 }
 
+typedef ImageBlockComponentMenuBuilder = Widget Function(
+  Node node,
+  ImageBlockComponentWidgetState state,
+);
+
 class ImageBlockComponentBuilder extends BlockComponentBuilder {
   ImageBlockComponentBuilder({
     this.configuration = const BlockComponentConfiguration(),
+    this.showMenu = false,
+    this.menuBuilder,
   });
 
   @override
   final BlockComponentConfiguration configuration;
+
+  /// Whether to show the menu of this block component.
+  final bool showMenu;
+
+  ///
+  final ImageBlockComponentMenuBuilder? menuBuilder;
 
   @override
   BlockComponentWidget build(BlockComponentContext blockComponentContext) {
@@ -69,14 +82,13 @@ class ImageBlockComponentBuilder extends BlockComponentBuilder {
         blockComponentContext,
         state,
       ),
+      showMenu: showMenu,
+      menuBuilder: menuBuilder,
     );
   }
 
   @override
-  bool validate(Node node) =>
-      node.delta == null &&
-      node.children.isEmpty &&
-      node.attributes[ImageBlockKeys.url] is String;
+  bool validate(Node node) => node.delta == null && node.children.isEmpty;
 }
 
 class ImageBlockComponentWidget extends BlockComponentStatefulWidget {
@@ -86,30 +98,56 @@ class ImageBlockComponentWidget extends BlockComponentStatefulWidget {
     super.showActions,
     super.actionBuilder,
     super.configuration = const BlockComponentConfiguration(),
+    this.showMenu = false,
+    this.menuBuilder,
   });
+
+  /// Whether to show the menu of this block component.
+  final bool showMenu;
+
+  final ImageBlockComponentMenuBuilder? menuBuilder;
 
   @override
   State<ImageBlockComponentWidget> createState() =>
-      _ImageBlockComponentWidgetState();
+      ImageBlockComponentWidgetState();
 }
 
-class _ImageBlockComponentWidgetState extends State<ImageBlockComponentWidget> {
+class ImageBlockComponentWidgetState extends State<ImageBlockComponentWidget>
+    with SelectableMixin, BlockComponentConfigurable {
+  @override
+  BlockComponentConfiguration get configuration => widget.configuration;
+
+  @override
+  Node get node => widget.node;
+
+  final imageKey = GlobalKey();
+  RenderBox get _renderBox => context.findRenderObject() as RenderBox;
+
   late final editorState = Provider.of<EditorState>(context, listen: false);
+
+  final showActionsNotifier = ValueNotifier<bool>(false);
+
+  bool alwaysShowMenu = false;
 
   @override
   Widget build(BuildContext context) {
     final node = widget.node;
     final attributes = node.attributes;
     final src = attributes[ImageBlockKeys.url];
-    final align = attributes[ImageBlockKeys.align] ?? 'center';
-    final width = attributes[ImageBlockKeys.width]?.toDouble();
 
-    Widget child = ImageNodeWidget(
-      node: node,
+    final alignment = AlignmentExtension.fromString(
+      attributes[ImageBlockKeys.align] ?? 'center',
+    );
+    final width = attributes[ImageBlockKeys.width]?.toDouble() ??
+        MediaQuery.of(context).size.width;
+    final height = attributes[ImageBlockKeys.height]?.toDouble();
+
+    Widget child = ResizableImage(
       src: src,
       width: width,
+      height: height,
       editable: editorState.editable,
-      alignment: _textToAlignment(align),
+      alignment: alignment,
       onResize: (width) {
         final transaction = editorState.transaction
           ..updateNode(node, {
@@ -117,6 +155,12 @@ class _ImageBlockComponentWidgetState extends State<ImageBlockComponentWidget> {
           });
         editorState.apply(transaction);
       },
+    );
+
+    child = Padding(
+      key: imageKey,
+      padding: padding,
+      child: child,
     );
 
     if (widget.showActions && widget.actionBuilder != null) {
@@ -127,15 +171,93 @@ class _ImageBlockComponentWidgetState extends State<ImageBlockComponentWidget> {
       );
     }
 
+    if (widget.showMenu && widget.menuBuilder != null) {
+      child = MouseRegion(
+        onEnter: (_) => showActionsNotifier.value = true,
+        onExit: (_) {
+          if (!alwaysShowMenu) {
+            showActionsNotifier.value = false;
+          }
+        },
+        hitTestBehavior: HitTestBehavior.opaque,
+        opaque: false,
+        child: ValueListenableBuilder<bool>(
+          valueListenable: showActionsNotifier,
+          builder: (context, value, child) {
+            return Stack(
+              children: [
+                child!,
+                if (value) widget.menuBuilder!(widget.node, this),
+              ],
+            );
+          },
+          child: child,
+        ),
+      );
+    }
+
     return child;
   }
 
-  Alignment _textToAlignment(String text) {
-    if (text == 'left') {
-      return Alignment.centerLeft;
-    } else if (text == 'right') {
-      return Alignment.centerRight;
+  @override
+  Position start() => Position(path: widget.node.path, offset: 0);
+
+  @override
+  Position end() => Position(path: widget.node.path, offset: 1);
+
+  @override
+  Position getPositionInOffset(Offset start) => end();
+
+  @override
+  bool get shouldCursorBlink => false;
+
+  @override
+  CursorStyle get cursorStyle => CursorStyle.cover;
+
+  @override
+  Rect getBlockRect() {
+    return getCursorRectInPosition(Position.invalid()) ?? Rect.zero;
+  }
+
+  @override
+  Rect? getCursorRectInPosition(Position position) {
+    final size = _renderBox.size;
+    return Rect.fromLTWH(-size.width / 2.0, 0, size.width, size.height);
+  }
+
+  @override
+  List<Rect> getRectsInSelection(Selection selection) {
+    final parentBox = context.findRenderObject();
+    final dividerBox = imageKey.currentContext?.findRenderObject();
+    if (parentBox is RenderBox && dividerBox is RenderBox) {
+      return [
+        dividerBox.localToGlobal(Offset.zero, ancestor: parentBox) &
+            dividerBox.size
+      ];
     }
-    return Alignment.center;
+    return [Offset.zero & _renderBox.size];
+  }
+
+  @override
+  Selection getSelectionInRange(Offset start, Offset end) => Selection.single(
+        path: widget.node.path,
+        startOffset: 0,
+        endOffset: 1,
+      );
+
+  @override
+  Offset localToGlobal(Offset offset) => _renderBox.localToGlobal(offset);
+}
+
+extension AlignmentExtension on Alignment {
+  static Alignment fromString(String name) {
+    switch (name) {
+      case 'left':
+        return Alignment.centerLeft;
+      case 'right':
+        return Alignment.centerRight;
+      default:
+        return Alignment.center;
+    }
   }
 }

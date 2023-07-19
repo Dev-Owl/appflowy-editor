@@ -1,28 +1,12 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../util/util.dart';
 import '../test_character_shortcut.dart';
 
 void main() async {
   group(
     'divider_character_shortcut.dart',
     () {
-      setUpAll(() {
-        if (kDebugMode) {
-          activateLog();
-        }
-      });
-
-      tearDownAll(
-        () {
-          if (kDebugMode) {
-            deactivateLog();
-          }
-        },
-      );
-
       // Before
       // --
       // After
@@ -51,6 +35,25 @@ void main() async {
         testFormatCharacterShortcut(
           convertStarsToDivider,
           '**',
+          2,
+          (result, before, after) {
+            expect(result, true);
+            expect(after.delta, null);
+            expect(after.type, DividerBlockKeys.type);
+          },
+          text: text,
+        );
+      });
+
+      // Before
+      //  __
+      // After
+      // [divider]
+      test('___ to divider', () async {
+        const text = '';
+        testFormatCharacterShortcut(
+          convertUnderscoreToDivider,
+          '__',
           2,
           (result, before, after) {
             expect(result, true);

@@ -1,4 +1,5 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
+import 'package:appflowy_editor/src/editor/block_component/base_component/block_icon_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,10 +7,17 @@ class QuoteBlockKeys {
   const QuoteBlockKeys._();
 
   static const String type = 'quote';
+
+  static const String delta = blockComponentDelta;
+
+  static const String backgroundColor = blockComponentBackgroundColor;
+
+  static const String textDirection = blockComponentTextDirection;
 }
 
 Node quoteNode({
   Delta? delta,
+  String? textDirection,
   Attributes? attributes,
   Iterable<Node>? children,
 }) {
@@ -18,6 +26,7 @@ Node quoteNode({
     type: QuoteBlockKeys.type,
     attributes: {
       ...attributes,
+      if (textDirection != null) QuoteBlockKeys.textDirection: textDirection,
     },
     children: children ?? [],
   );
@@ -26,10 +35,13 @@ Node quoteNode({
 class QuoteBlockComponentBuilder extends BlockComponentBuilder {
   QuoteBlockComponentBuilder({
     this.configuration = const BlockComponentConfiguration(),
+    this.iconBuilder,
   });
 
   @override
   final BlockComponentConfiguration configuration;
+
+  final BlockIconBuilder? iconBuilder;
 
   @override
   BlockComponentWidget build(BlockComponentContext blockComponentContext) {
@@ -38,6 +50,7 @@ class QuoteBlockComponentBuilder extends BlockComponentBuilder {
       key: node.key,
       node: node,
       configuration: configuration,
+      iconBuilder: iconBuilder,
       showActions: showActions(node),
       actionBuilder: (context, state) => actionBuilder(
         blockComponentContext,
@@ -57,7 +70,10 @@ class QuoteBlockComponentWidget extends BlockComponentStatefulWidget {
     super.showActions,
     super.actionBuilder,
     super.configuration = const BlockComponentConfiguration(),
+    this.iconBuilder,
   });
+
+  final BlockIconBuilder? iconBuilder;
 
   @override
   State<QuoteBlockComponentWidget> createState() =>
@@ -67,14 +83,20 @@ class QuoteBlockComponentWidget extends BlockComponentStatefulWidget {
 class _QuoteBlockComponentWidgetState extends State<QuoteBlockComponentWidget>
     with
         SelectableMixin,
-        DefaultSelectable,
+        DefaultSelectableMixin,
         BlockComponentConfigurable,
-        BackgroundColorMixin {
+        BlockComponentBackgroundColorMixin,
+        BlockComponentTextDirectionMixin {
   @override
   final forwardKey = GlobalKey(debugLabel: 'flowy_rich_text');
 
   @override
   GlobalKey<State<StatefulWidget>> get containerKey => widget.node.key;
+
+  @override
+  GlobalKey<State<StatefulWidget>> blockComponentKey = GlobalKey(
+    debugLabel: QuoteBlockKeys.type,
+  );
 
   @override
   BlockComponentConfiguration get configuration => widget.configuration;
@@ -86,17 +108,25 @@ class _QuoteBlockComponentWidgetState extends State<QuoteBlockComponentWidget>
 
   @override
   Widget build(BuildContext context) {
+    final textDirection = calculateTextDirection(
+      defaultTextDirection: Directionality.maybeOf(context),
+    );
+
     Widget child = Container(
       color: backgroundColor,
+      width: double.infinity,
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
+          textDirection: textDirection,
           children: [
-            defaultIcon(),
+            widget.iconBuilder != null
+                ? widget.iconBuilder!(context, node)
+                : const _QuoteIcon(),
             Flexible(
-              child: FlowyRichText(
+              child: AppFlowyRichText(
                 key: forwardKey,
                 node: widget.node,
                 editorState: editorState,
@@ -108,11 +138,18 @@ class _QuoteBlockComponentWidgetState extends State<QuoteBlockComponentWidget>
                     textSpan.updateTextStyle(
                   placeholderTextStyle,
                 ),
+                textDirection: textDirection,
               ),
             ),
           ],
         ),
       ),
+    );
+
+    child = Padding(
+      key: blockComponentKey,
+      padding: padding,
+      child: child,
     );
 
     if (widget.showActions && widget.actionBuilder != null) {
@@ -125,10 +162,14 @@ class _QuoteBlockComponentWidgetState extends State<QuoteBlockComponentWidget>
 
     return child;
   }
+}
 
-  // TODO: support custom icon.
-  Widget defaultIcon() {
-    return const FlowySvg(
+class _QuoteIcon extends StatelessWidget {
+  const _QuoteIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return const EditorSvg(
       width: 20,
       height: 20,
       padding: EdgeInsets.only(right: 5.0),

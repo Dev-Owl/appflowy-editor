@@ -27,26 +27,27 @@ class _TextDecorationMenuState extends State<_TextDecorationMenu> {
     TextDecorationUnit(
       icon: AFMobileIcons.bold,
       label: AppFlowyEditorLocalizations.current.bold,
-      name: FlowyRichTextKeys.bold,
+      name: AppFlowyRichTextKeys.bold,
     ),
     TextDecorationUnit(
       icon: AFMobileIcons.italic,
       label: AppFlowyEditorLocalizations.current.italic,
-      name: FlowyRichTextKeys.italic,
+      name: AppFlowyRichTextKeys.italic,
     ),
     TextDecorationUnit(
       icon: AFMobileIcons.underline,
       label: AppFlowyEditorLocalizations.current.underline,
-      name: FlowyRichTextKeys.underline,
+      name: AppFlowyRichTextKeys.underline,
     ),
     TextDecorationUnit(
       icon: AFMobileIcons.strikethrough,
       label: AppFlowyEditorLocalizations.current.strikethrough,
-      name: FlowyRichTextKeys.strikethrough,
+      name: AppFlowyRichTextKeys.strikethrough,
     ),
   ];
   @override
   Widget build(BuildContext context) {
+    final style = MobileToolbarStyle.of(context);
     final btnList = textDecorations.map((currentDecoration) {
       // Check current decoration is active or not
       final nodes = widget.editorState.getNodesInSelection(widget.selection);
@@ -60,7 +61,7 @@ class _TextDecorationMenuState extends State<_TextDecorationMenu> {
         icon: AFMobileIcon(
           afMobileIcons: currentDecoration.icon,
         ),
-        label: currentDecoration.label,
+        label: Text(currentDecoration.label),
         isSelected: isSelected,
         onPressed: () {
           if (widget.selection.isCollapsed) {
@@ -74,24 +75,13 @@ class _TextDecorationMenuState extends State<_TextDecorationMenu> {
       );
     }).toList();
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView(
-          shrinkWrap: true,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 5,
-          ),
-          children: btnList,
-        ),
-        // TODO(yijing): Add color after showColorMenu moved into desktop
-        // Text(AppFlowyEditorLocalizations.current.textColor),
-        // Text(AppFlowyEditorLocalizations.current.highlightColor),
-      ],
+    return GridView(
+      shrinkWrap: true,
+      gridDelegate: buildMobileToolbarMenuGridDelegate(
+        mobileToolbarStyle: style,
+        crossAxisCount: 2,
+      ),
+      children: btnList,
     );
   }
 }

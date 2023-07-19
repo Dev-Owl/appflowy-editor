@@ -18,11 +18,13 @@ void main() {
 
     await editor.updateSelection(selection);
     await tester.pumpWidget(
-      MobileAppWithToolbarWidget(
-        editorState: editor.editorState,
-        toolbarItems: [
-          codeMobileToolbarItem,
-        ],
+      Material(
+        child: MobileAppWithToolbarWidget(
+          editorState: editor.editorState,
+          toolbarItems: [
+            codeMobileToolbarItem,
+          ],
+        ),
       ),
     );
 
@@ -35,7 +37,8 @@ void main() {
     expect(
       node?.allSatisfyInSelection(selection, (delta) {
         return delta.whereType<TextInsert>().every(
-              (element) => element.attributes?[FlowyRichTextKeys.code] == true,
+              (element) =>
+                  element.attributes?[AppFlowyRichTextKeys.code] == true,
             );
       }),
       true,

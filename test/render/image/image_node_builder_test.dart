@@ -1,6 +1,4 @@
-import 'package:appflowy_editor/src/editor/block_component/image_block_component/image_block_component.dart';
-import 'package:appflowy_editor/src/infra/flowy_svg.dart';
-import 'package:appflowy_editor/src/service/editor_service.dart';
+import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +18,9 @@ void main() async {
       mockNetworkImagesFor(() async {
         final editor = tester.editor
           ..addParagraph(initialText: text)
-          ..addNode(imageNode(url: url))
+          ..addNode(
+            imageNode(url: url),
+          )
           ..addParagraph(initialText: text);
         await editor.startTesting();
         await tester.pumpAndSettle();
@@ -36,7 +36,9 @@ void main() async {
       mockNetworkImagesFor(() async {
         final editor = tester.editor
           ..addParagraph(initialText: text)
-          ..addNode(imageNode(url: url))
+          ..addNode(
+            imageNode(url: url),
+          )
           ..addParagraph(initialText: text);
 
         await editor.startTesting(editable: false);
@@ -55,7 +57,7 @@ void main() async {
         await gesture.moveTo(tester.getCenter(find.byType(Image)));
         await tester.pumpAndSettle();
 
-        expect(find.byType(FlowySvg), findsNothing);
+        expect(find.byType(EditorSvg), findsNothing);
 
         await editor.dispose();
       });
@@ -65,7 +67,9 @@ void main() async {
       mockNetworkImagesFor(() async {
         final editor = tester.editor
           ..addParagraph(initialText: text)
-          ..addNode(imageNode(url: url))
+          ..addNode(
+            imageNode(url: url),
+          )
           ..addParagraph(initialText: text);
 
         await editor.startTesting();
@@ -94,9 +98,27 @@ void main() async {
       mockNetworkImagesFor(() async {
         final editor = tester.editor
           ..addParagraph(initialText: text)
-          ..addNode(imageNode(url: url, align: 'left', width: 100))
-          ..addNode(imageNode(url: url, align: 'center', width: 100))
-          ..addNode(imageNode(url: url, align: 'right', width: 100))
+          ..addNode(
+            imageNode(
+              url: url,
+              align: 'left',
+              width: 100,
+            ),
+          )
+          ..addNode(
+            imageNode(
+              url: url,
+              align: 'center',
+              width: 100,
+            ),
+          )
+          ..addNode(
+            imageNode(
+              url: url,
+              align: 'right',
+              width: 100,
+            ),
+          )
           ..addParagraph(initialText: text);
         await editor.startTesting();
         await tester.pumpAndSettle();
@@ -111,12 +133,12 @@ void main() async {
         final leftImageRect = tester.getRect(imageFinder.at(0));
         expect(
           leftImageRect.left,
-          editor.editorState.editorStyle.padding!.left,
+          editor.editorState.editorStyle.padding.left,
         );
         final rightImageRect = tester.getRect(imageFinder.at(2));
         expect(
           rightImageRect.right,
-          editorRect.right - editor.editorState.editorStyle.padding!.right,
+          editorRect.right - editor.editorState.editorStyle.padding.right,
         );
         final centerImageRect = tester.getRect(imageFinder.at(1));
         expect(
@@ -148,7 +170,9 @@ void main() async {
       mockNetworkImagesFor(() async {
         final editor = tester.editor
           ..addParagraph(initialText: text)
-          ..addNode(imageNode(url: url))
+          ..addNode(
+            imageNode(url: url),
+          )
           ..addParagraph(initialText: text);
         await editor.startTesting();
 
@@ -156,7 +180,7 @@ void main() async {
         final imageFinder = find.byType(Image);
         expect(imageFinder, findsOneWidget);
 
-        final node = editor.document.nodeAtPath([1]);
+        // final node = editor.document.nodeAtPath([1]);
 
         // expect(editor.runAction(3, imageNode!), true); // copy
         // await tester.pump();
@@ -167,8 +191,12 @@ void main() async {
       mockNetworkImagesFor(() async {
         final editor = tester.editor
           ..addParagraph(initialText: text)
-          ..addNode(imageNode(url: url))
-          ..addNode(imageNode(url: url))
+          ..addNode(
+            imageNode(url: url),
+          )
+          ..addNode(
+            imageNode(url: url),
+          )
           ..addParagraph(initialText: text);
         await editor.startTesting();
 

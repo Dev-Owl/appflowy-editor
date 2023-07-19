@@ -11,16 +11,18 @@ class _HeadingToolbarItem extends ToolbarItem {
       : super(
           id: 'editor.h$level',
           group: 1,
-          isActive: (editorState) => editorState.selection?.isSingle ?? false,
-          builder: (context, editorState) {
+          isActive: onlyShowInSingleSelectionAndTextType,
+          builder: (context, editorState, highlightColor) {
             final selection = editorState.selection!;
             final node = editorState.getNodeAtPath(selection.start.path)!;
             final isHighlight =
                 node.type == 'heading' && node.attributes['level'] == level;
-            return IconItemWidget(
+            final delta = (node.delta ?? Delta()).toJson();
+            return SVGIconItemWidget(
               iconName: 'toolbar/h$level',
               isHighlight: isHighlight,
-              tooltip: AppFlowyEditorLocalizations.current.heading1,
+              highlightColor: highlightColor,
+              tooltip: levelToTooltips(level),
               onPressed: () => editorState.formatNode(
                 selection,
                 (node) => node.copyWith(
@@ -29,13 +31,26 @@ class _HeadingToolbarItem extends ToolbarItem {
                       : HeadingBlockKeys.type,
                   attributes: {
                     HeadingBlockKeys.level: level,
-                    HeadingBlockKeys.backgroundColor:
+                    blockComponentBackgroundColor:
                         node.attributes[blockComponentBackgroundColor],
-                    'delta': (node.delta ?? Delta()).toJson(),
+                    blockComponentTextDirection:
+                        node.attributes[blockComponentTextDirection],
+                    blockComponentDelta: delta,
                   },
                 ),
               ),
             );
           },
         );
+
+  static String levelToTooltips(int level) {
+    if (level == 1) {
+      return AppFlowyEditorLocalizations.current.heading1;
+    } else if (level == 2) {
+      return AppFlowyEditorLocalizations.current.heading2;
+    } else if (level == 3) {
+      return AppFlowyEditorLocalizations.current.heading3;
+    }
+    return '';
+  }
 }

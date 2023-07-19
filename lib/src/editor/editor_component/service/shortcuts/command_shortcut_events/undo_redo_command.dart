@@ -30,8 +30,8 @@ CommandShortcutEventHandler _undoCommandHandler = (editorState) {
 ///   - web
 ///
 final CommandShortcutEvent redoCommand = CommandShortcutEvent(
-  key: 'undo',
-  command: 'ctrl+shift+z',
+  key: 'redo',
+  command: 'ctrl+y,ctrl+shift+z',
   macOSCommand: 'cmd+shift+z',
   handler: _redoCommandHandler,
 );

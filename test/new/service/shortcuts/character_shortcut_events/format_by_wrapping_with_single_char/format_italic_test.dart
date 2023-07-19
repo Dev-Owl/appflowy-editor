@@ -1,22 +1,9 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../../../util/util.dart';
 
 void main() async {
   group('format italic', () {
-    setUpAll(() {
-      if (kDebugMode) {
-        activateLog();
-      }
-    });
-
-    tearDownAll(() {
-      if (kDebugMode) {
-        deactivateLog();
-      }
-    });
-
     group('by wrapping with single underscore', () {
       // Before
       // _AppFlowy|
@@ -150,9 +137,12 @@ void main() async {
 
         expect(result, true);
         final after = editorState.getNodeAtPath([0])!;
-        expect(after.delta!.toPlainText(), '$text1$text2');
-        expect(after.delta!.toList()[0].attributes, null);
-        expect(after.delta!.toList()[1].attributes, {'italic': true});
+        final afterDelta = after.delta!;
+        expect(afterDelta.toPlainText(), '$text1$text2');
+        final deltaList = afterDelta.toList();
+        expect(deltaList.length, 2);
+        expect(deltaList[0].attributes, null);
+        expect(deltaList[1].attributes, {'italic': true});
       });
 
       // Before

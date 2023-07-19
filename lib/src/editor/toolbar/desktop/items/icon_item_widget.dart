@@ -1,32 +1,38 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 
-class IconItemWidget extends StatelessWidget {
-  const IconItemWidget({
+class SVGIconItemWidget extends StatelessWidget {
+  const SVGIconItemWidget({
     super.key,
     this.size = const Size.square(30.0),
     this.iconSize = const Size.square(18.0),
-    required this.iconName,
+    this.iconName,
+    this.iconBuilder,
     required this.isHighlight,
+    required this.highlightColor,
     this.tooltip,
     this.onPressed,
   });
 
   final Size size;
   final Size iconSize;
-  final String iconName;
+  final String? iconName;
+  final WidgetBuilder? iconBuilder;
   final bool isHighlight;
+  final Color highlightColor;
   final String? tooltip;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    Widget child = FlowySvg(
-      name: iconName,
-      color: isHighlight ? Colors.lightBlue : null,
-      width: iconSize.width,
-      height: iconSize.height,
-    );
+    Widget child = iconBuilder != null
+        ? iconBuilder!(context)
+        : EditorSvg(
+            name: iconName,
+            color: isHighlight ? highlightColor : null,
+            width: iconSize.width,
+            height: iconSize.height,
+          );
     if (onPressed != null) {
       child = MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -46,6 +52,7 @@ class IconItemWidget extends StatelessWidget {
         textAlign: TextAlign.center,
         preferBelow: false,
         message: tooltip,
+        waitDuration: const Duration(milliseconds: 500),
         child: child,
       );
     }

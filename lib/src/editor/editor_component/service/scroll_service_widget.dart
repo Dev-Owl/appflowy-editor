@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:appflowy_editor/src/editor/editor_component/service/scroll/auto_scrollable_widget.dart';
 import 'package:appflowy_editor/src/editor/editor_component/service/scroll/auto_scroller.dart';
@@ -70,7 +68,7 @@ class _ScrollServiceWidgetState extends State<ScrollServiceWidget>
       builder: ((context, autoScroller) {
         if (PlatformExtension.isDesktopOrWeb) {
           return _buildDesktopScrollService(context, autoScroller);
-        } else if (Platform.isIOS || Platform.isAndroid) {
+        } else if (PlatformExtension.isMobile) {
           return _buildMobileScrollService(context, autoScroller);
         }
         throw UnimplementedError();
@@ -109,14 +107,22 @@ class _ScrollServiceWidgetState extends State<ScrollServiceWidget>
         editorState.selectionUpdateReason == SelectionUpdateReason.selectAll) {
       return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final selectionRect = editorState.selectionRects();
       if (selectionRect.isEmpty) {
         return;
       }
       final endTouchPoint = selectionRect.last.centerRight;
       if (selection.isCollapsed) {
-        startAutoScroll(endTouchPoint, edgeOffset: 50);
+        if (PlatformExtension.isMobile) {
+          // soft keyboard
+          // workaround: wait for the soft keyboard to show up
+          Future.delayed(const Duration(milliseconds: 300), () {
+            startAutoScroll(endTouchPoint, edgeOffset: 50);
+          });
+        } else {
+          startAutoScroll(endTouchPoint, edgeOffset: 100);
+        }
       } else {
         startAutoScroll(endTouchPoint);
       }

@@ -7,7 +7,7 @@ final linkMobileToolbarItem = MobileToolbarItem.withMenu(
   ),
   itemMenuBuilder: (editorState, selection, service) {
     final String? linkText = editorState.getDeltaAttributeValueInSelection(
-      FlowyRichTextKeys.href,
+      AppFlowyRichTextKeys.href,
       selection,
     );
 
@@ -17,7 +17,7 @@ final linkMobileToolbarItem = MobileToolbarItem.withMenu(
       onSubmitted: (value) async {
         if (value.isNotEmpty) {
           await editorState.formatDelta(selection, {
-            FlowyRichTextKeys.href: value,
+            AppFlowyRichTextKeys.href: value,
           });
         }
         service.closeItemMenu();
@@ -127,7 +127,7 @@ class _MobileLinkMenuState extends State<_MobileLinkMenu> {
                     ),
                   ),
                 ),
-                child: const Text('Done'),
+                child: Text(AppFlowyEditorLocalizations.current.done),
               ),
             )
             // TODO(yijing): edit link?

@@ -22,11 +22,13 @@ void main() {
 
     await editor.updateSelection(selection);
     await tester.pumpWidget(
-      MobileAppWithToolbarWidget(
-        editorState: editor.editorState,
-        toolbarItems: [
-          linkMobileToolbarItem,
-        ],
+      Material(
+        child: MobileAppWithToolbarWidget(
+          editorState: editor.editorState,
+          toolbarItems: [
+            linkMobileToolbarItem,
+          ],
+        ),
       ),
     );
 
@@ -50,7 +52,7 @@ void main() {
       node?.allSatisfyInSelection(selection, (delta) {
         return delta.whereType<TextInsert>().every(
               (element) =>
-                  element.attributes?[FlowyRichTextKeys.href] == linkAddress,
+                  element.attributes?[AppFlowyRichTextKeys.href] == linkAddress,
             );
       }),
       true,

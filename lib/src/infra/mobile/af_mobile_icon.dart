@@ -8,8 +8,7 @@ enum AFMobileIcons {
   underline('toolbar_icons/underline'),
   strikethrough('toolbar_icons/strikethrough'),
   code('toolbar_icons/code'),
-  textColor('toolbar_icons/text_color'),
-  highlightColor('toolbar_icons/highlight_color'),
+  color('toolbar_icons/color'),
   link('toolbar_icons/link'),
   heading('toolbar_icons/heading'),
   h1('toolbar_icons/h1'),
@@ -20,7 +19,8 @@ enum AFMobileIcons {
   numberedList('toolbar_icons/numbered_list'),
   checkbox('toolbar_icons/checkbox'),
   quote('toolbar_icons/quote'),
-  divider('toolbar_icons/divider');
+  divider('toolbar_icons/divider'),
+  close('toolbar_icons/close');
 
   final String iconPath;
   const AFMobileIcons(this.iconPath);

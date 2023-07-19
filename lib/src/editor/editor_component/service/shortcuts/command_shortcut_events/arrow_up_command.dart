@@ -17,7 +17,7 @@ final List<CommandShortcutEvent> arrowUpKeys = [
 ///
 
 // arrow up key
-// move the cursor backward one character
+// move the cursor upward vertically
 final CommandShortcutEvent moveCursorUpCommand = CommandShortcutEvent(
   key: 'move the cursor upward',
   command: 'arrow up',
@@ -45,9 +45,9 @@ CommandShortcutEventHandler _moveCursorUpCommandHandler = (editorState) {
 };
 
 /// arrow up + shift + ctrl or cmd
-/// cursor top select
+/// move the cursor to the topmost position of the document and select everything in between
 final CommandShortcutEvent moveCursorTopSelectCommand = CommandShortcutEvent(
-  key: 'cursor top select', // TODO: rename it.
+  key: 'move cursor to start of file and select all',
   command: 'ctrl+shift+arrow up',
   macOSCommand: 'cmd+shift+arrow up',
   handler: _moveCursorTopSelectCommandHandler,
@@ -69,13 +69,18 @@ CommandShortcutEventHandler _moveCursorTopSelectCommandHandler = (editorState) {
     selection.copyWith(end: end),
     reason: SelectionUpdateReason.uiEvent,
   );
+  final scrollService = editorState.scrollService;
+  if (scrollService != null) {
+    final top = scrollService.minScrollExtent;
+    scrollService.scrollTo(top);
+  }
   return KeyEventResult.handled;
 };
 
 /// arrow up + ctrl or cmd
-/// move the cursor to the topmost position of the document and select it
+/// move the cursor to the topmost position of the document
 final CommandShortcutEvent moveCursorTopCommand = CommandShortcutEvent(
-  key: 'move cursor top', // TODO: rename it.
+  key: 'move cursor to start of file',
   command: 'ctrl+arrow up',
   macOSCommand: 'cmd+arrow up',
   handler: _moveCursorTopCommandHandler,
@@ -97,12 +102,18 @@ CommandShortcutEventHandler _moveCursorTopCommandHandler = (editorState) {
     Selection.collapsed(position),
     reason: SelectionUpdateReason.uiEvent,
   );
+  final scrollService = editorState.scrollService;
+  if (scrollService != null) {
+    final top = scrollService.minScrollExtent;
+    scrollService.scrollTo(top);
+  }
   return KeyEventResult.handled;
 };
 
 /// arrow up + ctrl or cmd
+/// moves vertically down one line and selects everything between
 final CommandShortcutEvent moveCursorUpSelectCommand = CommandShortcutEvent(
-  key: 'move cursor up select', // TODO: rename it.
+  key: 'move cursor up and select one line',
   command: 'shift+arrow up',
   macOSCommand: 'shift+arrow up',
   handler: _moveCursorUpSelectCommandHandler,

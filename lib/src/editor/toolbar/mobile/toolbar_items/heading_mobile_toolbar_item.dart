@@ -29,23 +29,25 @@ class _HeadingMenuState extends State<_HeadingMenu> {
   final headings = [
     HeadingUnit(
       icon: AFMobileIcons.h1,
-      label: 'Heading 1',
+      label: AppFlowyEditorLocalizations.current.mobileHeading1,
       level: 1,
     ),
     HeadingUnit(
       icon: AFMobileIcons.h2,
-      label: 'Heading 2',
+      label: AppFlowyEditorLocalizations.current.mobileHeading2,
       level: 2,
     ),
     HeadingUnit(
       icon: AFMobileIcons.h3,
-      label: 'Heading 3',
+      label: AppFlowyEditorLocalizations.current.mobileHeading3,
       level: 3,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final style = MobileToolbarStyle.of(context);
+    final size = MediaQuery.sizeOf(context);
     final btnList = headings.map((currentHeading) {
       // Check if current node is heading and its level
       final node =
@@ -53,34 +55,46 @@ class _HeadingMenuState extends State<_HeadingMenu> {
       final isSelected = node.type == HeadingBlockKeys.type &&
           node.attributes[HeadingBlockKeys.level] == currentHeading.level;
 
-      return MobileToolbarItemMenuBtn(
-        icon: AFMobileIcon(afMobileIcons: currentHeading.icon),
-        label: currentHeading.label,
-        isSelected: isSelected,
-        onPressed: () {
-          setState(() {
-            widget.editorState.formatNode(
-              widget.selection,
-              (node) => node.copyWith(
-                type: isSelected
-                    ? ParagraphBlockKeys.type
-                    : HeadingBlockKeys.type,
-                attributes: {
-                  HeadingBlockKeys.level: currentHeading.level,
-                  HeadingBlockKeys.backgroundColor:
-                      node.attributes[blockComponentBackgroundColor],
-                  ParagraphBlockKeys.delta: (node.delta ?? Delta()).toJson(),
-                },
-              ),
-            );
-          });
-        },
+      return ConstrainedBox(
+        constraints: BoxConstraints.tightFor(
+          // 3 buttons in a row
+          width: (size.width - 4 * style.buttonSpacing) / 3,
+        ),
+        child: MobileToolbarItemMenuBtn(
+          icon: AFMobileIcon(afMobileIcons: currentHeading.icon),
+          label: Text(
+            currentHeading.label,
+            maxLines: 2,
+          ),
+          isSelected: isSelected,
+          onPressed: () {
+            setState(() {
+              widget.editorState.formatNode(
+                widget.selection,
+                (node) => node.copyWith(
+                  type: isSelected
+                      ? ParagraphBlockKeys.type
+                      : HeadingBlockKeys.type,
+                  attributes: {
+                    HeadingBlockKeys.level: currentHeading.level,
+                    HeadingBlockKeys.backgroundColor:
+                        node.attributes[blockComponentBackgroundColor],
+                    ParagraphBlockKeys.delta: (node.delta ?? Delta()).toJson(),
+                  },
+                ),
+              );
+            });
+          },
+        ),
       );
     }).toList();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: btnList,
+    return ConstrainedBox(
+      constraints: BoxConstraints.tightFor(width: size.width),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: btnList,
+      ),
     );
   }
 }

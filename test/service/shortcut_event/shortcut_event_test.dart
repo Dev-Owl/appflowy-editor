@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:appflowy_editor/src/service/shortcut_event/shortcut_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,10 +42,12 @@ void main() async {
       await editor.updateSelection(selection);
 
       await editor.pressKey(
-        key: LogicalKeyboardKey.arrowLeft,
-        isControlPressed: Platform.isWindows || Platform.isLinux,
+        key: Platform.isMacOS
+            ? LogicalKeyboardKey.arrowLeft
+            : LogicalKeyboardKey.home,
         isMetaPressed: Platform.isMacOS,
       );
+
       expect(
         editor.selection,
         Selection.single(path: [1], startOffset: 0),
@@ -82,10 +85,12 @@ void main() async {
       await editor.updateSelection(selection);
 
       await editor.pressKey(
-        key: LogicalKeyboardKey.arrowRight,
-        isControlPressed: Platform.isWindows || Platform.isLinux,
+        key: Platform.isMacOS
+            ? LogicalKeyboardKey.arrowRight
+            : LogicalKeyboardKey.end,
         isMetaPressed: Platform.isMacOS,
       );
+
       expect(
         editor.selection,
         Selection.single(path: [1], startOffset: text.length),

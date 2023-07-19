@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 class FloatingToolbarStyle {
   const FloatingToolbarStyle({
     this.backgroundColor = Colors.black,
+    this.toolbarActiveColor = Colors.lightBlue,
   });
 
   final Color backgroundColor;
+  final Color toolbarActiveColor;
 }
 
 /// A floating toolbar that displays at the top of the editor when the selection
@@ -168,6 +170,7 @@ class _FloatingToolbarState extends State<FloatingToolbar>
       items: widget.items,
       editorState: editorState,
       backgroundColor: widget.style.backgroundColor,
+      toolbarActiveColor: widget.style.toolbarActiveColor,
     );
     return _toolbarWidget!;
   }
@@ -210,15 +213,18 @@ class _FloatingToolbarState extends State<FloatingToolbar>
     final right = (rect.right - editorCenter.dx).abs();
     final width = editorSize.width;
     final threshold = width / 3.0;
+    final top = rect.top < floatingToolbarHeight
+        ? rect.bottom + floatingToolbarHeight
+        : rect.top;
     if (rect.left >= threshold && rect.right <= threshold * 2.0) {
       // show in center
-      return (rect.top, threshold, null);
-    } else if (left >= right) {
+      return (top, threshold, null);
+    } else if (left >= right && rect.left <= threshold) {
       // show in left
-      return (rect.top, rect.left, null);
+      return (top, rect.left, null);
     } else {
       // show in right
-      return (rect.top, null, editorRect.right - rect.right);
+      return (top, null, editorRect.right - rect.right);
     }
   }
 }

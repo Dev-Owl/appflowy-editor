@@ -1,5 +1,4 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,18 +9,6 @@ import '../../../util/util.dart';
 // single | means the cursor
 // double | means the selection
 void main() async {
-  setUpAll(() {
-    if (kDebugMode) {
-      activateLog();
-    }
-  });
-
-  tearDownAll(() {
-    if (kDebugMode) {
-      deactivateLog();
-    }
-  });
-
   group('backspaceCommand - unit test', () {
     group('backspaceCommand - collapsed selection', () {
       const text = 'Welcome to AppFlowy Editor 🔥!';
@@ -153,6 +140,38 @@ void main() async {
           ),
         );
       });
+
+      test("backspace convert bullet list to paragraph but keep direction",
+          () async {
+        String rtlText = 'سلام';
+        final document = Document.blank().addNode(
+          BulletedListBlockKeys.type,
+          initialText: rtlText,
+          decorator: (index, node) => node.updateAttributes(
+            {
+              blockComponentTextDirection: blockComponentTextDirectionRTL,
+            },
+          ),
+        );
+        final editorState = EditorState(document: document);
+
+        // Welcome to AppFlowy Editor 🔥!
+        // |Welcome to AppFlowy Editor 🔥!
+        final selection = Selection.collapsed(
+          Position(path: [0], offset: 0),
+        );
+        editorState.selection = selection;
+
+        final result = convertToParagraphCommand.execute(editorState);
+        expect(result, KeyEventResult.handled);
+
+        final node = editorState.getNodeAtPath([0])!;
+        expect(node.type, ParagraphBlockKeys.type);
+        expect(
+          node.attributes[ParagraphBlockKeys.textDirection],
+          blockComponentTextDirectionRTL,
+        );
+      });
     });
 
     group('backspaceCommand - not collapsed selection', () {
@@ -232,7 +251,6 @@ void main() async {
       test(
           'Delete in the not collapsed selection that is not single and not flatted',
           () async {
-        Delta deltaBuilder(index) => Delta()..insert(text);
         final document = Document.blank()
             .addParagraph(
               initialText: text,
@@ -326,10 +344,12 @@ void main() async {
       final delta = Delta()..insert(text);
       final editor = tester.editor
         ..addNode(headingNode(level: 1, delta: delta))
-        ..addNode(bulletedListNode(
-          delta: delta,
-          children: [bulletedListNode(delta: delta)],
-        ));
+        ..addNode(
+          bulletedListNode(
+            delta: delta,
+            children: [bulletedListNode(delta: delta)],
+          ),
+        );
 
       await editor.startTesting();
 
@@ -374,10 +394,12 @@ void main() async {
       final delta = Delta()..insert(text);
       final editor = tester.editor
         ..addNode(bulletedListNode(delta: delta))
-        ..addNode(bulletedListNode(
-          delta: delta,
-          children: [bulletedListNode(delta: delta)],
-        ));
+        ..addNode(
+          bulletedListNode(
+            delta: delta,
+            children: [bulletedListNode(delta: delta)],
+          ),
+        );
 
       await editor.startTesting();
 
@@ -405,6 +427,43 @@ void main() async {
       final bulletedNode = editor.nodeAtPath([0, 0])!;
       expect(bulletedNode.type, BulletedListBlockKeys.type);
       expect(bulletedNode.delta!.toPlainText(), text);
+
+      await editor.dispose();
+    });
+
+    // Before
+    // Welcome to AppFlowy Editor 🔥!
+    // |---|
+    // Welcome to AppFlowy Editor 🔥!
+    // After
+    // Welcome to AppFlowy Editor 🔥!
+    // |Welcome to AppFlowy Editor 🔥!
+    testWidgets('Delete the non-text node, such as divider', (tester) async {
+      final editor = tester.editor
+        ..addParagraph(initialText: text)
+        ..addNode(dividerNode())
+        ..addParagraph(initialText: text);
+
+      await editor.startTesting();
+
+      final selection = Selection.single(
+        path: [1],
+        startOffset: 0,
+        endOffset: 1,
+      );
+      await editor.updateSelection(selection);
+
+      await simulateKeyDownEvent(LogicalKeyboardKey.backspace);
+      await tester.pumpAndSettle();
+
+      expect(
+        editor.nodeAtPath([1])?.delta?.toPlainText(),
+        text,
+      );
+      expect(
+        editor.selection,
+        Selection.collapse([1], 0),
+      );
 
       await editor.dispose();
     });

@@ -1,22 +1,34 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
+import 'package:appflowy_editor/src/editor/block_component/base_component/block_icon_builder.dart';
 import 'package:flutter/material.dart';
 
 class BulletedListBlockKeys {
   BulletedListBlockKeys._();
 
   static const String type = 'bulleted_list';
+
+  static const String delta = blockComponentDelta;
+
+  static const String backgroundColor = blockComponentBackgroundColor;
+
+  static const String textDirection = blockComponentTextDirection;
 }
 
 Node bulletedListNode({
+  String? text,
   Delta? delta,
+  String? textDirection,
   Attributes? attributes,
   Iterable<Node>? children,
 }) {
-  attributes ??= {'delta': (delta ?? Delta()).toJson()};
   return Node(
     type: BulletedListBlockKeys.type,
     attributes: {
-      ...attributes,
+      BulletedListBlockKeys.delta:
+          (delta ?? (Delta()..insert(text ?? ''))).toJson(),
+      if (attributes != null) ...attributes,
+      if (textDirection != null)
+        BulletedListBlockKeys.textDirection: textDirection,
     },
     children: children ?? [],
   );
@@ -25,10 +37,13 @@ Node bulletedListNode({
 class BulletedListBlockComponentBuilder extends BlockComponentBuilder {
   BulletedListBlockComponentBuilder({
     this.configuration = const BlockComponentConfiguration(),
+    this.iconBuilder,
   });
 
   @override
   final BlockComponentConfiguration configuration;
+
+  final BlockIconBuilder? iconBuilder;
 
   @override
   BlockComponentWidget build(BlockComponentContext blockComponentContext) {
@@ -37,6 +52,7 @@ class BulletedListBlockComponentBuilder extends BlockComponentBuilder {
       key: node.key,
       node: node,
       configuration: configuration,
+      iconBuilder: iconBuilder,
       showActions: showActions(node),
       actionBuilder: (context, state) => actionBuilder(
         blockComponentContext,
@@ -56,7 +72,10 @@ class BulletedListBlockComponentWidget extends BlockComponentStatefulWidget {
     super.showActions,
     super.actionBuilder,
     super.configuration = const BlockComponentConfiguration(),
+    this.iconBuilder,
   });
+
+  final BlockIconBuilder? iconBuilder;
 
   @override
   State<BulletedListBlockComponentWidget> createState() =>
@@ -67,15 +86,21 @@ class _BulletedListBlockComponentWidgetState
     extends State<BulletedListBlockComponentWidget>
     with
         SelectableMixin,
-        DefaultSelectable,
+        DefaultSelectableMixin,
         BlockComponentConfigurable,
-        BackgroundColorMixin,
-        NestedBlockComponentStatefulWidgetMixin {
+        BlockComponentBackgroundColorMixin,
+        NestedBlockComponentStatefulWidgetMixin,
+        BlockComponentTextDirectionMixin {
   @override
   final forwardKey = GlobalKey(debugLabel: 'flowy_rich_text');
 
   @override
   GlobalKey<State<StatefulWidget>> get containerKey => widget.node.key;
+
+  @override
+  GlobalKey<State<StatefulWidget>> blockComponentKey = GlobalKey(
+    debugLabel: BulletedListBlockKeys.type,
+  );
 
   @override
   BlockComponentConfiguration get configuration => widget.configuration;
@@ -84,20 +109,36 @@ class _BulletedListBlockComponentWidgetState
   Node get node => widget.node;
 
   @override
+  EdgeInsets get indentPadding => configuration.indentPadding(
+        node,
+        calculateTextDirection(
+          defaultTextDirection: Directionality.maybeOf(context),
+        ),
+      );
+
+  @override
   Widget buildComponent(BuildContext context) {
+    final textDirection = calculateTextDirection(
+      defaultTextDirection: Directionality.maybeOf(context),
+    );
+
     Widget child = Container(
       color: backgroundColor,
+      width: double.infinity,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
+        textDirection: textDirection,
         children: [
-          _BulletedListIcon(
-            node: widget.node,
-            textStyle: textStyle,
-          ),
+          widget.iconBuilder != null
+              ? widget.iconBuilder!(context, node)
+              : _BulletedListIcon(
+                  node: widget.node,
+                  textStyle: textStyle,
+                ),
           Flexible(
-            child: FlowyRichText(
+            child: AppFlowyRichText(
               key: forwardKey,
               node: widget.node,
               editorState: editorState,
@@ -109,10 +150,17 @@ class _BulletedListBlockComponentWidgetState
                   textSpan.updateTextStyle(
                 placeholderTextStyle,
               ),
+              textDirection: textDirection,
             ),
           ),
         ],
       ),
+    );
+
+    child = Padding(
+      key: blockComponentKey,
+      padding: padding,
+      child: child,
     );
 
     if (widget.showActions && widget.actionBuilder != null) {

@@ -84,6 +84,10 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
   final key = GlobalKey();
   final layerLink = LayerLink();
 
+  void notify() {
+    notifyListeners();
+  }
+
   /// Update the attributes of the node.
   ///
   ///
@@ -195,7 +199,8 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
           .toList(growable: false);
     }
     if (attributes.isNotEmpty) {
-      map['data'] = attributes;
+      // filter the null value
+      map['data'] = attributes..removeWhere((_, value) => value == null);
     }
     return map;
   }
